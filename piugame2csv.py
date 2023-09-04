@@ -1,9 +1,11 @@
+from typing import Dict
 import bs4 as bs
 import requests
 import json
+import re
 
 
-base_url = "https://www.piugame.com/my_page/my_best_score.php"
+base_url = "https://piugame.com/my_page/my_best_score.php?&&page="
 login_url = "https://piugame.com/bbs/login_check.php"
 login_page_url = (
     "https://www.piugame.com/login.php?login_url=%2Fmy_page%2Fplay_data.php"
@@ -39,15 +41,58 @@ headers = {
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69",
 }
 
+def parse_best_score(page_content: bs.element.Tag):
+    parsed_scores = list()
+    score_list = page_content.find("ul", class_="my_best_scoreList flex wrap")
+    # print(score_list)
+    for li in score_list:
+        if isinstance(li, bs.element.Tag):
+            score = dict()
+            print("=============")
+            print(li)
+            song_name = li.find("div", class_="song_name").text
+            print(f"song_name : {song_name}")
+            score["Song"] = song_name
+            score_value = int(li.find("span", class_="num").text.replace(",",""))
+            print(f"score: {score_value}")
+            score["Score"] = score_value
+            parsed_scores.append(score)
+    return parsed_scores
+
+def parse_best_scores(page_text: str, s: requests.Session):
+    best_scores = list()
+    soup = bs.BeautifulSoup(page_text, "lxml")
+    # Calculate number of pages.
+    page_contents = soup.find(id="contents")
+    print(type(page_contents))
+    pages = page_contents.find("div", class_="board_paging")
+    for page in pages:
+        if isinstance(page, bs.element.Tag):
+            if page.find("i", class_="xi last") is not None:
+                onclick_value = page.get("onclick")
+                # print(f"{type(onclick_value)} : {onclick_value}")
+                re_res = re.search(r"page=(\d*)", onclick_value)
+                if re_res:
+                    last_page = int(re_res.group(1))
+    print(f"Found {last_page} pages...")
+    cur_page_scores = parse_best_score(page_contents)
+    best_scores.extend(cur_page_scores)
+    print(best_scores)
+    # for page_num in range(2, last_page+1):
+    #     score_page = s.get(base_url+str(page_num))
+    #     soup = bs.BeautifulSoup(score_page.text, "lxml")
+    #     page_contents = soup.find(id="contents")
+    #     cur_page_scores = parse_best_scores(page_contents)
+    #     best_scores.update(cur_page_scores)
 
 if __name__ == "__main__":
     # load creds
     with open("creds.json", "r") as f:
         creds = json.load(f)
-    print(creds)
     # start session
     with requests.Session() as s:
         print(s.cookies.get_dict())
+        # login then redirect to best scores
         res = s.post(
             "https://piugame.com/bbs/login_check.php",
             cookies=cookies,
@@ -56,20 +101,5 @@ if __name__ == "__main__":
         )
         print(res.status_code)
         print(s.cookies.get_dict())
-        soup = bs.BeautifulSoup(res.text, "lxml")
-        print(soup)
+        parse_best_scores(res.text, s)
 
-        # print("REQUEST================")
-        # print(res.request.headers)
-        # print(res.request.body)
-        # print("RESPONSE================")
-        # print(res.status_code)
-        # print(res.cookies)
-        # # print(res.text)
-
-        # get scores page
-        # res = s.get("https://piugame.com/my_page/my_best_score.php", cookies={"sid": "n0ft722fdd8m69p6ba23t7oq55", "_ga": "GA1.1.805729999.1692455102", "2a0d2363701f23f8a75028924a3af643": "MTU0LjI3LjIxLjU4", "_ga_D4HZW1SFFF": "GS1.1.1693775295.6.1.1693775385.0.0.0"})
-        # res.raise_for_status()
-        # html = res.text
-        # soup = bs.BeautifulSoup(html, 'lxml')
-        # print(soup)
