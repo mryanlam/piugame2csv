@@ -42,6 +42,7 @@ headers = {
 }
 
 def parse_best_score(page_content: bs.element.Tag):
+    print(page_content)
     parsed_scores = list()
     score_list = page_content.find("ul", class_="my_best_scoreList flex wrap")
     # print(score_list)
@@ -49,14 +50,19 @@ def parse_best_score(page_content: bs.element.Tag):
         if isinstance(li, bs.element.Tag):
             score = dict()
             print("=============")
-            print(li)
+            # print(li)
             song_name = li.find("div", class_="song_name").text
-            print(f"song_name : {song_name}")
+            # print(f"song_name : {song_name}")
             score["Song"] = song_name
+
             score_value = int(li.find("span", class_="num").text.replace(",",""))
-            print(f"score: {score_value}")
+            # print(f"score: {score_value}")
             score["Score"] = score_value
             parsed_scores.append(score)
+
+            step_ball_div = li.find("div", class_="stepBall_img_wrap")
+            print(step_ball_div)
+
     return parsed_scores
 
 def parse_best_scores(page_text: str, s: requests.Session):
@@ -75,15 +81,19 @@ def parse_best_scores(page_text: str, s: requests.Session):
                 if re_res:
                     last_page = int(re_res.group(1))
     print(f"Found {last_page} pages...")
-    cur_page_scores = parse_best_score(page_contents)
-    best_scores.extend(cur_page_scores)
-    print(best_scores)
+    # cur_page_scores = parse_best_score(page_contents)
+    # best_scores.extend(cur_page_scores)
+    
+    for page_num in range(2, 3):
     # for page_num in range(2, last_page+1):
-    #     score_page = s.get(base_url+str(page_num))
-    #     soup = bs.BeautifulSoup(score_page.text, "lxml")
-    #     page_contents = soup.find(id="contents")
-    #     cur_page_scores = parse_best_scores(page_contents)
-    #     best_scores.update(cur_page_scores)
+        cur_page_url = base_url+str(page_num)
+        print(cur_page_url)
+        score_page = s.get(cur_page_url, headers=headers)
+        soup = bs.BeautifulSoup(score_page.text, "lxml")
+        page_contents = soup.find(id="contents")
+        cur_page_scores = parse_best_score(page_contents)
+        best_scores.extend(cur_page_scores)
+    return best_scores
 
 if __name__ == "__main__":
     # load creds
@@ -91,15 +101,16 @@ if __name__ == "__main__":
         creds = json.load(f)
     # start session
     with requests.Session() as s:
+        for k,v in cookies.items():
+            s.cookies.set(k, v)
         print(s.cookies.get_dict())
         # login then redirect to best scores
         res = s.post(
             "https://piugame.com/bbs/login_check.php",
-            cookies=cookies,
             headers=headers,
             data=creds,
         )
         print(res.status_code)
         print(s.cookies.get_dict())
-        parse_best_scores(res.text, s)
+        print(parse_best_scores(res.text, s))
 
