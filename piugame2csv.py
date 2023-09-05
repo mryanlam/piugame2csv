@@ -79,7 +79,7 @@ def parse_best_score(page_content: bs.element.Tag):
             score = dict()
             # print("=============")
             # print(li)
-            song_name = li.find("div", class_="song_name").text
+            song_name = li.find("div", class_="song_name").text.strip()
             # print(f"song_name : {song_name}")
             score["Song"] = song_name
 
