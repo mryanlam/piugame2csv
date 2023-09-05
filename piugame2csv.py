@@ -3,6 +3,8 @@ import bs4 as bs
 import requests
 import json
 import re
+import time
+import csv
 
 
 base_url = "https://piugame.com/my_page/my_best_score.php?&&page="
@@ -75,7 +77,7 @@ def parse_best_score(page_content: bs.element.Tag):
     for li in score_list:
         if isinstance(li, bs.element.Tag):
             score = dict()
-            print("=============")
+            # print("=============")
             # print(li)
             song_name = li.find("div", class_="song_name").text
             # print(f"song_name : {song_name}")
@@ -109,7 +111,6 @@ def parse_best_scores(page_text: str, s: requests.Session):
     soup = bs.BeautifulSoup(page_text, "lxml")
     # Calculate number of pages.
     page_contents = soup.find(id="contents")
-    print(type(page_contents))
     pages = page_contents.find("div", class_="board_paging")
     for page in pages:
         if isinstance(page, bs.element.Tag):
@@ -120,11 +121,12 @@ def parse_best_scores(page_text: str, s: requests.Session):
                 if re_res:
                     last_page = int(re_res.group(1))
     print(f"Found {last_page} pages...")
-    # cur_page_scores = parse_best_score(page_contents)
-    # best_scores.extend(cur_page_scores)
+    cur_page_scores = parse_best_score(page_contents)
+    best_scores.extend(cur_page_scores)
 
-    for page_num in range(2, 3):
-        # for page_num in range(2, last_page+1):
+    # for page_num in range(2, 3):
+    for page_num in range(2, last_page+1):
+        time.sleep(5)
         cur_page_url = base_url + str(page_num)
         print(cur_page_url)
         score_page = s.get(cur_page_url, headers=headers)
@@ -133,6 +135,13 @@ def parse_best_scores(page_text: str, s: requests.Session):
         cur_page_scores = parse_best_score(page_contents)
         best_scores.extend(cur_page_scores)
     return best_scores
+
+def output_csv(scores):
+    with open("scores.csv", "w") as csvfile:
+        fields = ["Song","Difficulty","Score","LetterGrade","Plate"]
+        writer = csv.DictWriter(csvfile, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(scores)
 
 
 if __name__ == "__main__":
@@ -143,7 +152,6 @@ if __name__ == "__main__":
     with requests.Session() as s:
         for k, v in cookies.items():
             s.cookies.set(k, v)
-        print(s.cookies.get_dict())
         # login then redirect to best scores
         res = s.post(
             "https://piugame.com/bbs/login_check.php",
@@ -152,4 +160,5 @@ if __name__ == "__main__":
         )
         print(res.status_code)
         print(s.cookies.get_dict())
-        print(parse_best_scores(res.text, s))
+        scores = parse_best_scores(res.text, s)
+        output_csv(scores)
