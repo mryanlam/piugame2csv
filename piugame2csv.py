@@ -51,6 +51,18 @@ def parse_difficulty(urls: List[str]) -> str:
     if not diff:
         raise ValueError("urls didn't match expected difficulty")
     return diff
+
+def parse_grades(grades):
+    letter_grade = None
+    plate = None
+    for grade in grades:
+        letter_res = re.search(r"grade\/(.*)\.png", grade)
+        if letter_res:
+            letter_grade = letter_res.group(1).replace("_p", "+")
+        plate_res = re.search(r"plate\/(.*)\.png", grade)
+        if plate_res:
+            plate = plate_res.group(1)
+    return letter_grade, plate
     
 
 def parse_best_score(page_content: bs.element.Tag):
@@ -79,6 +91,12 @@ def parse_best_score(page_content: bs.element.Tag):
                         difficulty_parts.append(img.get("src"))
             difficulty = parse_difficulty(difficulty_parts)
             score["Difficulty"] = difficulty
+
+            grade_wrap = li.find("ul", class_="list flex vc hc wrap")
+            grades = [grade.get("src") for grade in grade_wrap.find_all("img")]
+            letter_grade, plate = parse_grades(grades)
+            score["LetterGrade"] = letter_grade
+            score["Plate"] = plate
 
     return parsed_scores
 
