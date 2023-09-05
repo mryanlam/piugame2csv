@@ -40,6 +40,8 @@ headers = {
     "upgrade-insecure-requests": "1",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69",
 }
+
+
 def parse_difficulty(urls: List[str]) -> str:
     diff = None
     for url in urls:
@@ -52,6 +54,7 @@ def parse_difficulty(urls: List[str]) -> str:
         raise ValueError("urls didn't match expected difficulty")
     return diff
 
+
 def parse_grades(grades):
     letter_grade = None
     plate = None
@@ -63,7 +66,7 @@ def parse_grades(grades):
         if plate_res:
             plate = plate_res.group(1)
     return letter_grade, plate
-    
+
 
 def parse_best_score(page_content: bs.element.Tag):
     parsed_scores = list()
@@ -78,7 +81,7 @@ def parse_best_score(page_content: bs.element.Tag):
             # print(f"song_name : {song_name}")
             score["Song"] = song_name
 
-            score_value = int(li.find("span", class_="num").text.replace(",",""))
+            score_value = int(li.find("span", class_="num").text.replace(",", ""))
             # print(f"score: {score_value}")
             score["Score"] = score_value
             parsed_scores.append(score)
@@ -100,6 +103,7 @@ def parse_best_score(page_content: bs.element.Tag):
 
     return parsed_scores
 
+
 def parse_best_scores(page_text: str, s: requests.Session):
     best_scores = list()
     soup = bs.BeautifulSoup(page_text, "lxml")
@@ -118,10 +122,10 @@ def parse_best_scores(page_text: str, s: requests.Session):
     print(f"Found {last_page} pages...")
     # cur_page_scores = parse_best_score(page_contents)
     # best_scores.extend(cur_page_scores)
-    
+
     for page_num in range(2, 3):
-    # for page_num in range(2, last_page+1):
-        cur_page_url = base_url+str(page_num)
+        # for page_num in range(2, last_page+1):
+        cur_page_url = base_url + str(page_num)
         print(cur_page_url)
         score_page = s.get(cur_page_url, headers=headers)
         soup = bs.BeautifulSoup(score_page.text, "lxml")
@@ -130,13 +134,14 @@ def parse_best_scores(page_text: str, s: requests.Session):
         best_scores.extend(cur_page_scores)
     return best_scores
 
+
 if __name__ == "__main__":
     # load creds
     with open("creds.json", "r") as f:
         creds = json.load(f)
     # start session
     with requests.Session() as s:
-        for k,v in cookies.items():
+        for k, v in cookies.items():
             s.cookies.set(k, v)
         print(s.cookies.get_dict())
         # login then redirect to best scores
@@ -148,4 +153,3 @@ if __name__ == "__main__":
         print(res.status_code)
         print(s.cookies.get_dict())
         print(parse_best_scores(res.text, s))
-
