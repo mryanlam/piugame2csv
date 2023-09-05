@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Dict, List
 import bs4 as bs
 import requests
 import json
@@ -40,9 +40,20 @@ headers = {
     "upgrade-insecure-requests": "1",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69",
 }
+def parse_difficulty(urls: List[str]) -> str:
+    diff = None
+    for url in urls:
+        re_res = re.search(r"stepball\/full\/([cds]).*(\d)\.png", url)
+        if re_res:
+            if not diff:
+                diff = re_res.group(1)
+            diff += re_res.group(2)
+    if not diff:
+        raise ValueError("urls didn't match expected difficulty")
+    return diff
+    
 
 def parse_best_score(page_content: bs.element.Tag):
-    print(page_content)
     parsed_scores = list()
     score_list = page_content.find("ul", class_="my_best_scoreList flex wrap")
     # print(score_list)
@@ -60,8 +71,14 @@ def parse_best_score(page_content: bs.element.Tag):
             score["Score"] = score_value
             parsed_scores.append(score)
 
-            step_ball_div = li.find("div", class_="stepBall_img_wrap")
-            print(step_ball_div)
+            step_ball_div = li.find("div", class_="numw flex vc hc")
+            difficulty_parts = list()
+            for child_div in step_ball_div:
+                if isinstance(child_div, bs.element.Tag):
+                    for img in child_div:
+                        difficulty_parts.append(img.get("src"))
+            difficulty = parse_difficulty(difficulty_parts)
+            score["Difficulty"] = difficulty
 
     return parsed_scores
 
