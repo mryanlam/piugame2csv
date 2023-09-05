@@ -126,7 +126,7 @@ def parse_best_scores(page_text: str, s: requests.Session):
 
     # for page_num in range(2, 3):
     for page_num in range(2, last_page+1):
-        time.sleep(5)
+        time.sleep(1)
         cur_page_url = base_url + str(page_num)
         print(cur_page_url)
         score_page = s.get(cur_page_url, headers=headers)
