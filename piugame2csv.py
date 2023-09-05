@@ -54,6 +54,7 @@ def parse_difficulty(urls: List[str]) -> str:
             diff += re_res.group(2)
     if not diff:
         raise ValueError("urls didn't match expected difficulty")
+    diff.replace("c", "c.")
     return diff
 
 
