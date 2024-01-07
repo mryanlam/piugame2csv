@@ -183,13 +183,6 @@ def post_piuscores(scores, creds):
         json_payload["score"] = int(row["Score"])
         json_payload["isBroken"] = False
 
-        from http.client import HTTPConnection
-        HTTPConnection.debuglevel = 1
-        logging.basicConfig() # you need to initialize logging, otherwise you will not see anything from requests
-        logging.getLogger().setLevel(logging.DEBUG)
-        requests_log = logging.getLogger("urllib3")
-        requests_log.setLevel(logging.DEBUG)
-        requests_log.propagate = True
         res = requests.post(piuscores_arroweclipse_uri, json=json_payload, auth=(creds["piuscores_user"], creds["piuscores_key"]))
         if not res.ok:
             print(f"Failed to post: {json_payload}")
