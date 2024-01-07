@@ -66,7 +66,6 @@ def parse_difficulty(urls: List[str]) -> str:
             diff += re_res.group(2)
     if not diff:
         raise ValueError("urls didn't match expected difficulty")
-    diff = diff.replace("c", "c.")
     return diff
 
 
@@ -156,15 +155,30 @@ def output_csv(scores):
         writer.writeheader()
         writer.writerows(scores)
 
+def difficulty_values(diff: str) -> [str, int]:
+    chart_type = ""
+    chart_level = None
+
+    if diff.startswith("c"):
+        chart_type = "CoOp"
+    elif diff.startswith("s"):
+        chart_type = "Single"
+    elif diff.startswith("d"):
+        chart_type = "Double"
+
+    chart_level = int(diff[1:])
+
+    return (chart_type, chart_level)
+
 def post_piuscores(scores, creds):
     piuscores_arroweclipse_uri = "https://piuscores.arroweclip.se/api/phoenixScores"
     for row in scores:
-        if row["Difficulty"].startswith("c"):
-            continue
         json_payload = dict()
         json_payload["songName"] = row["Song"]
-        json_payload["chartType"] = "Single" if row["Difficulty"].startswith("s") else "Double"
-        json_payload["chartLevel"] = int(row["Difficulty"][1:])
+
+        chart_type, chart_level = difficulty_values(row["Difficulty"])
+        json_payload["chartType"] = chart_type
+        json_payload["chartLevel"] = chart_level
         json_payload["plate"] = plate_mapping[row["Plate"]]
         json_payload["score"] = int(row["Score"])
         json_payload["isBroken"] = False
@@ -177,6 +191,8 @@ def post_piuscores(scores, creds):
         requests_log.setLevel(logging.DEBUG)
         requests_log.propagate = True
         res = requests.post(piuscores_arroweclipse_uri, json=json_payload, auth=(creds["piuscores_user"], creds["piuscores_key"]))
+        if not res.ok:
+            print(f"Failed to post: {json_payload}")
 
 if __name__ == "__main__":
     # load creds
