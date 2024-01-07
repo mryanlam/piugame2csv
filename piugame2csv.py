@@ -5,6 +5,7 @@ import json
 import re
 import time
 import csv
+import logging
 
 
 base_url = "https://piugame.com/my_page/my_best_score.php?&&page="
@@ -41,6 +42,17 @@ headers = {
     "sec-fetch-user": "?1",
     "upgrade-insecure-requests": "1",
     "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69",
+}
+
+plate_mapping = {
+    "rg": "RoughGame",
+    "fg": "FairGame",
+    "tg": "TalentedGame",
+    "mg": "MarvelousGame",
+    "sg": "SuperbGame",
+    "eg": "ExtremeGame",
+    "ug": "UltimateGame",
+    "pg": "PerfectGame",
 }
 
 
@@ -127,14 +139,14 @@ def parse_best_scores(page_text: str, s: requests.Session):
 
     # for page_num in range(2, 3):
     for page_num in range(2, last_page+1):
-        time.sleep(1)
-        cur_page_url = base_url + str(page_num)
-        print(cur_page_url)
-        score_page = s.get(cur_page_url, headers=headers)
-        soup = bs.BeautifulSoup(score_page.text, "lxml")
-        page_contents = soup.find(id="contents")
-        cur_page_scores = parse_best_score(page_contents)
-        best_scores.extend(cur_page_scores)
+        # time.sleep(1)
+        # cur_page_url = base_url + str(page_num)
+        # print(cur_page_url)
+        # score_page = s.get(cur_page_url, headers=headers)
+        # soup = bs.BeautifulSoup(score_page.text, "lxml")
+        # page_contents = soup.find(id="contents")
+        # cur_page_scores = parse_best_score(page_contents)
+        # best_scores.extend(cur_page_scores)
     return best_scores
 
 def output_csv(scores):
@@ -144,6 +156,27 @@ def output_csv(scores):
         writer.writeheader()
         writer.writerows(scores)
 
+def post_piuscores(scores, creds):
+    piuscores_arroweclipse_uri = "https://piuscores.arroweclip.se/api/phoenixScores"
+    for row in scores:
+        if row["Difficulty"].startswith("c"):
+            continue
+        json_payload = dict()
+        json_payload["songName"] = row["Song"]
+        json_payload["chartType"] = "Single" if row["Difficulty"].startswith("s") else "Double"
+        json_payload["chartLevel"] = int(row["Difficulty"][1:])
+        json_payload["plate"] = plate_mapping[row["Plate"]]
+        json_payload["score"] = int(row["Score"])
+        json_payload["isBroken"] = False
+
+        from http.client import HTTPConnection
+        HTTPConnection.debuglevel = 1
+        logging.basicConfig() # you need to initialize logging, otherwise you will not see anything from requests
+        logging.getLogger().setLevel(logging.DEBUG)
+        requests_log = logging.getLogger("urllib3")
+        requests_log.setLevel(logging.DEBUG)
+        requests_log.propagate = True
+        res = requests.post(piuscores_arroweclipse_uri, json=json_payload, auth=(creds["piuscores_user"], creds["piuscores_key"]))
 
 if __name__ == "__main__":
     # load creds
@@ -153,13 +186,17 @@ if __name__ == "__main__":
     with requests.Session() as s:
         for k, v in cookies.items():
             s.cookies.set(k, v)
+        data = {"url": "/my_page/my_best_score.php"}
+        data["mb_id"] = creds["mb_id"]
+        data["mb_password"] = creds["mb_password"]
         # login then redirect to best scores
         res = s.post(
             "https://piugame.com/bbs/login_check.php",
             headers=headers,
-            data=creds,
+            data=data,
         )
         print(res.status_code)
         print(s.cookies.get_dict())
         scores = parse_best_scores(res.text, s)
         output_csv(scores)
+        post_piuscores(scores, creds)
