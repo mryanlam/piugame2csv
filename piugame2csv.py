@@ -139,14 +139,14 @@ def parse_best_scores(page_text: str, s: requests.Session):
 
     # for page_num in range(2, 3):
     for page_num in range(2, last_page+1):
-        # time.sleep(1)
-        # cur_page_url = base_url + str(page_num)
-        # print(cur_page_url)
-        # score_page = s.get(cur_page_url, headers=headers)
-        # soup = bs.BeautifulSoup(score_page.text, "lxml")
-        # page_contents = soup.find(id="contents")
-        # cur_page_scores = parse_best_score(page_contents)
-        # best_scores.extend(cur_page_scores)
+        time.sleep(1)
+        cur_page_url = base_url + str(page_num)
+        print(cur_page_url)
+        score_page = s.get(cur_page_url, headers=headers)
+        soup = bs.BeautifulSoup(score_page.text, "lxml")
+        page_contents = soup.find(id="contents")
+        cur_page_scores = parse_best_score(page_contents)
+        best_scores.extend(cur_page_scores)
     return best_scores
 
 def output_csv(scores):
