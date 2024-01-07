@@ -93,6 +93,11 @@ def parse_best_score(page_content: bs.element.Tag):
             # print(li)
             song_name = li.find("div", class_="song_name").text.strip()
             # print(f"song_name : {song_name}")
+            # piuscores api doesn't support the Japanese text in these songs.
+            if song_name.startswith("ヨロピク"):
+                song_name = "Yoropiku Pikuyoro !"
+            elif song_name.startswith("CROSS RAY"):
+                song_name = "Cross Ray"
             score["Song"] = song_name
 
             score_value = int(li.find("span", class_="num").text.replace(",", ""))
