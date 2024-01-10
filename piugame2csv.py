@@ -14,9 +14,9 @@ login_page_url = (
 creds = dict()
 
 cookies = {
-    "sid": "doesthismatter",
+    "sid": "n0ft722fdd8m69p6ba23t7oq55",
     "_ga": "GA1.1.805729999.1692455102",
-    "PHPSESSID": "doesthismatter",
+    "PHPSESSID": "n0ft722fdd8m69p6ba23t7oq55",
     "2a0d2363701f23f8a75028924a3af643": "MTU0LjI3LjIxLjU4",
     "_ga_D4HZW1SFFF": "GS1.1.1693797062.7.0.1693797062.0.0.0",
 }
