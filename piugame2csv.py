@@ -135,7 +135,7 @@ def parse_best_scores(page_text: str, s: requests.Session, page_limit: int = 3) 
                 re_res = re.search(r"page=(\d*)", onclick_value)
                 if re_res:
                     last_page = int(re_res.group(1))
-    print(f"Found {last_page} pages...")
+    logging.info(f"Found {last_page} pages...")
     cur_page_scores = parse_best_score(page_contents)
     best_scores.extend(cur_page_scores)
 
@@ -144,7 +144,7 @@ def parse_best_scores(page_text: str, s: requests.Session, page_limit: int = 3) 
     for page_num in range(2, page_limit + 1):
         time.sleep(1)
         cur_page_url = base_url + str(page_num)
-        print(cur_page_url)
+        logging.info(cur_page_url)
         score_page = s.get(cur_page_url, headers=headers)
         soup = bs.BeautifulSoup(score_page.text, "lxml")
         page_contents = soup.find(id="contents")
@@ -154,6 +154,8 @@ def parse_best_scores(page_text: str, s: requests.Session, page_limit: int = 3) 
 
 
 def output_csv(scores) -> None:
+    filename = "scores.csv"
+    logging.info(f"Writing output to {filename}.")
     with open("scores.csv", "w") as csvfile:
         fields = ["Song", "Difficulty", "Score", "LetterGrade", "Plate"]
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -179,6 +181,7 @@ def difficulty_values(diff: str) -> list[str, int]:
 
 def post_piuscores(scores, creds) -> None:
     piuscores_arroweclipse_uri = "https://piuscores.arroweclip.se/api/phoenixScores"
+    logging.info(f"Posting to {piuscores_arroweclipse_uri}")
     for row in scores:
         json_payload = dict()
         json_payload["songName"] = row["Song"]
@@ -196,7 +199,7 @@ def post_piuscores(scores, creds) -> None:
             auth=(creds["piuscores_user"], creds["piuscores_key"]),
         )
         if not res.ok:
-            print(f"Failed to post: {json_payload}")
+            logging.error(f"Failed to post: {json_payload}")
 
 def scrape_scores(post_scores: bool = False, page_limit: int = 3,) -> None:
     # load creds
@@ -215,9 +218,10 @@ def scrape_scores(post_scores: bool = False, page_limit: int = 3,) -> None:
             headers=headers,
             data=data,
         )
-        print(res.status_code)
-        print(s.cookies.get_dict())
+        logging.debug(f"Login response: {res.status_code}")
+        logging.debug(f"cookies: {s.cookies.get_dict()}")
         scores = parse_best_scores(res.text, s, page_limit)
+        logging.info(f"Found {len(scores)} scores.")
         output_csv(scores)
         if post_scores:
             post_piuscores(scores, creds)
