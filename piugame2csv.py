@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Any, Tuple
 import bs4 as bs
 import requests
 import json
@@ -67,7 +67,7 @@ def parse_difficulty(urls: List[str]) -> str:
     return diff
 
 
-def parse_grades(grades):
+def parse_grades(grades) -> Tuple[str, str]:
     letter_grade = None
     plate = None
     for grade in grades:
@@ -80,7 +80,7 @@ def parse_grades(grades):
     return letter_grade, plate
 
 
-def parse_best_score(page_content: bs.element.Tag):
+def parse_best_score(page_content: bs.element.Tag) -> list[dict[str, Any]]:
     parsed_scores = list()
     score_list = page_content.find("ul", class_="my_best_scoreList flex wrap")
     # print(score_list)
@@ -121,7 +121,7 @@ def parse_best_score(page_content: bs.element.Tag):
     return parsed_scores
 
 
-def parse_best_scores(page_text: str, s: requests.Session, page_limit: int = 3):
+def parse_best_scores(page_text: str, s: requests.Session, page_limit: int = 3) -> list[dict[str, Any]]:
     best_scores = list()
     soup = bs.BeautifulSoup(page_text, "lxml")
     # Calculate number of pages.
@@ -151,7 +151,7 @@ def parse_best_scores(page_text: str, s: requests.Session, page_limit: int = 3):
     return best_scores
 
 
-def output_csv(scores):
+def output_csv(scores) -> None:
     with open("scores.csv", "w") as csvfile:
         fields = ["Song", "Difficulty", "Score", "LetterGrade", "Plate"]
         writer = csv.DictWriter(csvfile, fieldnames=fields)
@@ -159,7 +159,7 @@ def output_csv(scores):
         writer.writerows(scores)
 
 
-def difficulty_values(diff: str) -> [str, int]:
+def difficulty_values(diff: str) -> list[str, int]:
     chart_type = ""
     chart_level = None
 
@@ -175,7 +175,7 @@ def difficulty_values(diff: str) -> [str, int]:
     return (chart_type, chart_level)
 
 
-def post_piuscores(scores, creds):
+def post_piuscores(scores, creds) -> None:
     piuscores_arroweclipse_uri = "https://piuscores.arroweclip.se/api/phoenixScores"
     for row in scores:
         json_payload = dict()
@@ -196,8 +196,7 @@ def post_piuscores(scores, creds):
         if not res.ok:
             print(f"Failed to post: {json_payload}")
 
-
-if __name__ == "__main__":
+def scrape_scores(post_scores: bool = False, page_limit: int = 3,) -> None:
     # load creds
     with open("creds.json", "r") as f:
         creds = json.load(f)
@@ -216,6 +215,12 @@ if __name__ == "__main__":
         )
         print(res.status_code)
         print(s.cookies.get_dict())
-        scores = parse_best_scores(res.text, s)
+        scores = parse_best_scores(res.text, s, page_limit)
         output_csv(scores)
-        post_piuscores(scores, creds)
+        if post_scores:
+            post_piuscores(scores, creds)
+
+
+if __name__ == "__main__":
+    print("Scraping 3 pages without posting")
+    scrape_scores()
