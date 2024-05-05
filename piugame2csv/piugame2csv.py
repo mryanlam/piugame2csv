@@ -123,7 +123,9 @@ def parse_best_score(page_content: bs.element.Tag) -> list[dict[str, Any]]:
     return parsed_scores
 
 
-def parse_best_scores(page_text: str, s: requests.Session, page_limit: int = 3) -> list[dict[str, Any]]:
+def parse_best_scores(
+    page_text: str, s: requests.Session, page_limit: int = 3
+) -> list[dict[str, Any]]:
     best_scores = list()
     soup = bs.BeautifulSoup(page_text, "lxml")
     # Calculate number of pages.
@@ -203,7 +205,11 @@ def post_piuscores(scores, creds) -> None:
         if not res.ok:
             logger.error(f"Failed to post: {json_payload}")
 
-def scrape_scores(post_scores: bool = False, page_limit: int = 3,) -> None:
+
+def scrape_scores(
+    post_scores: bool = False,
+    page_limit: int = 3,
+) -> None:
     # load creds
     with open("creds.json", "r") as f:
         creds = json.load(f)
@@ -227,8 +233,3 @@ def scrape_scores(post_scores: bool = False, page_limit: int = 3,) -> None:
         output_csv(scores)
         if post_scores:
             post_piuscores(scores, creds)
-
-
-if __name__ == "__main__":
-    print("Scraping 3 pages without posting")
-    scrape_scores()

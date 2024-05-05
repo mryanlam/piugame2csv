@@ -1,5 +1,5 @@
 import typer
-import piugame2csv
+from . import piugame2csv
 
 app = typer.Typer()
 
