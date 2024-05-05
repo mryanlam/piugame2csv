@@ -4,24 +4,33 @@
 #
 # For more details, please check https://github.com/bazelbuild/bazel/issues/18958
 ###############################################################################
+"""
+This module contains build rules for piugame2csv
+"""
+module(name = "piugame2csv", version = "0.0.1")
 
 bazel_dep(name = "rules_python", version = "0.31.0")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    # We can specify the exact version.
+    python_version = "3.10.12",
+)
+
+# You can use this repo mapping to ensure that your BUILD.bazel files don't need
+# to be updated when the python version changes to a different `3.9` version.
+use_repo(
+    python,
+    python_3_10 = "python_3_10_12",
+)
 
 pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
 
 pip.parse(
-    hub_name = "my_deps",
-    python_version = "3.11",
-    requirements_lock = "//:requirements.txt",
+    hub_name = "pypi",
+    # We need to use the same version here as in the `python.toolchain` call.
+    python_version = "3.10.12",
+    requirements_lock = "//:requirements_lock.txt",
 )
 
-use_repo(pip, "my_deps")
-
-# (Optional) Register a specific python toolchain instead of using the host version
-python = use_extension("@rules_python//python:extensions.bzl", "python")
-python.toolchain(name = "python3_11", python_version = "3.11",)
-use_repo(python, "python3_11_toolchains")
-
-register_toolchains(
-    "@python3_11_toolchains//:all",
-)
+use_repo(pip, "pypi")
