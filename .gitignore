@@ -2,3 +2,5 @@ venv
 creds.json
 scores.csv
 __pycache__
+
+/dist/*
