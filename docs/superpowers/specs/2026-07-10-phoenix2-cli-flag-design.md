@@ -26,3 +26,4 @@ Implement a simple boolean flag `--phoenix2` in the CLI. By default, this flag w
 ## Testing
 - Verify that running `piugame2csv` without the flag targets `phoenix.piugame.com`.
 - Verify that running `piugame2csv --phoenix2` targets `piugame.com`.
+- Verify that running `piugame2csv --phoenix2` handles empty history gracefully (the page returns "There is no registered history.") and doesn't throw an exception or crash.
