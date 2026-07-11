@@ -89,6 +89,9 @@ def parse_best_score(page_content: bs.element.Tag) -> list[dict[str, Any]]:
     parsed_scores = list()
     score_list = page_content.find("ul", class_="my_best_scoreList flex wrap")
     # print(score_list)
+    if not score_list:
+        logger.info("No registered history found on this page.")
+        return parsed_scores
     for li in score_list:
         if isinstance(li, bs.element.Tag):
             score = dict()
