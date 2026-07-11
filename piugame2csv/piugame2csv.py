@@ -10,12 +10,6 @@ import urllib3
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-base_url = "https://phoenix.piugame.com/my_page/my_best_score.php?&&page="
-login_url = "https://phoenix.piugame.com/bbs/login_check.php"
-login_page_url = (
-    "https://phoenix.piugame.com/login.php?login_url=%2Fmy_page%2Fplay_data.php"
-)
-creds = dict()
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -27,25 +21,30 @@ cookies = {
     "_ga_D4HZW1SFFF": "GS1.1.1693797062.7.0.1693797062.0.0.0",
 }
 
-headers = {
-    "authority": "phoenix.piugame.com",
-    "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
-    "accept-language": "en-US,en;q=0.9",
-    "cache-control": "max-age=0",
-    "content-type": "application/x-www-form-urlencoded",
-    # 'cookie': 'sid=n0ft722fdd8m69p6ba23t7oq55; _ga=GA1.1.805729999.1692455102; PHPSESSID=n0ft722fdd8m69p6ba23t7oq55; 2a0d2363701f23f8a75028924a3af643=MTU0LjI3LjIxLjU4; _ga_D4HZW1SFFF=GS1.1.1693797062.7.0.1693797062.0.0.0',
-    "origin": "https://phoenix.piugame.com",
-    "referer": "https://phoenix.piugame.com/login.php?login_url=%2Fmy_page%2Fmy_best_score.php",
-    "sec-ch-ua": '"Chromium";v="116", "Not)A;Brand";v="24", "Microsoft Edge";v="116"',
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": '"Windows"',
-    "sec-fetch-dest": "document",
-    "sec-fetch-mode": "navigate",
-    "sec-fetch-site": "same-origin",
-    "sec-fetch-user": "?1",
-    "upgrade-insecure-requests": "1",
-    "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69",
-}
+
+def get_config(phoenix2: bool) -> tuple[str, str, dict]:
+    domain = "piugame.com" if phoenix2 else "phoenix.piugame.com"
+    base_url = f"https://{domain}/my_page/my_best_score.php?&&page="
+    login_url = f"https://{domain}/bbs/login_check.php"
+    headers = {
+        "authority": domain,
+        "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+        "accept-language": "en-US,en;q=0.9",
+        "cache-control": "max-age=0",
+        "content-type": "application/x-www-form-urlencoded",
+        "origin": f"https://{domain}",
+        "referer": f"https://{domain}/login.php?login_url=%2Fmy_page%2Fmy_best_score.php",
+        "sec-ch-ua": '"Chromium";v="116", "Not)A;Brand";v="24", "Microsoft Edge";v="116"',
+        "sec-ch-ua-mobile": "?0",
+        "sec-ch-ua-platform": '"Windows"',
+        "sec-fetch-dest": "document",
+        "sec-fetch-mode": "navigate",
+        "sec-fetch-site": "same-origin",
+        "sec-fetch-user": "?1",
+        "upgrade-insecure-requests": "1",
+        "user-agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/116.0.0.0 Safari/537.36 Edg/116.0.1938.69",
+    }
+    return base_url, login_url, headers
 
 plate_mapping = {
     "rg": "RoughGame",
@@ -130,7 +129,11 @@ def parse_best_score(page_content: bs.element.Tag) -> list[dict[str, Any]]:
 
 
 def parse_best_scores(
-    page_text: str, s: requests.Session, page_limit: int = 3
+    page_text: str,
+    s: requests.Session,
+    base_url: str,
+    headers: dict,
+    page_limit: int = 3,
 ) -> list[dict[str, Any]]:
     best_scores = list()
     soup = bs.BeautifulSoup(page_text, "lxml")
@@ -219,14 +222,7 @@ def scrape_scores(
     page_limit: int = 3,
     phoenix2: bool = False,
 ) -> None:
-    global base_url, login_url, login_page_url, headers
-    if phoenix2:
-        base_url = "https://piugame.com/my_page/my_best_score.php?&&page="
-        login_url = "https://piugame.com/bbs/login_check.php"
-        login_page_url = "https://piugame.com/login.php?login_url=%2Fmy_page%2Fplay_data.php"
-        headers["authority"] = "piugame.com"
-        headers["origin"] = "https://piugame.com"
-        headers["referer"] = "https://piugame.com/login.php?login_url=%2Fmy_page%2Fmy_best_score.php"
+    base_url, login_url, headers = get_config(phoenix2)
 
     # load creds
     with open("creds.json", "r") as f:
@@ -247,7 +243,7 @@ def scrape_scores(
         )
         logger.debug(f"Login response: {res.status_code}")
         logger.debug(f"cookies: {s.cookies.get_dict()}")
-        scores = parse_best_scores(res.text, s, page_limit)
+        scores = parse_best_scores(res.text, s, base_url, headers, page_limit)
         logger.info(f"Found {len(scores)} scores.")
         output_csv(scores)
         if post_scores:
