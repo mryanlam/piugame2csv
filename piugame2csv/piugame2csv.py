@@ -137,14 +137,16 @@ def parse_best_scores(
     # Calculate number of pages.
     page_contents = soup.find(id="contents")
     pages = page_contents.find("div", class_="board_paging")
-    for page in pages:
-        if isinstance(page, bs.element.Tag):
-            if page.find("i", class_="xi last") is not None:
-                onclick_value = page.get("onclick")
-                # print(f"{type(onclick_value)} : {onclick_value}")
-                re_res = re.search(r"page=(\d*)", onclick_value)
-                if re_res:
-                    last_page = int(re_res.group(1))
+    last_page = 1
+    if pages:
+        for page in pages:
+            if isinstance(page, bs.element.Tag):
+                if page.find("i", class_="xi last") is not None:
+                    onclick_value = page.get("onclick")
+                    # print(f"{type(onclick_value)} : {onclick_value}")
+                    re_res = re.search(r"page=(\d*)", onclick_value)
+                    if re_res:
+                        last_page = int(re_res.group(1))
     logger.info(f"Found {last_page} pages...")
     cur_page_scores = parse_best_score(page_contents)
     best_scores.extend(cur_page_scores)
