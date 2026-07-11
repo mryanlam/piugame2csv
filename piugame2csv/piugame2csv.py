@@ -7,10 +7,10 @@ import time
 import csv
 import logging
 
-base_url = "https://piugame.com/my_page/my_best_score.php?&&page="
-login_url = "https://piugame.com/bbs/login_check.php"
+base_url = "https://phoenix.piugame.com/my_page/my_best_score.php?&&page="
+login_url = "https://phoenix.piugame.com/bbs/login_check.php"
 login_page_url = (
-    "https://www.piugame.com/login.php?login_url=%2Fmy_page%2Fplay_data.php"
+    "https://phoenix.piugame.com/login.php?login_url=%2Fmy_page%2Fplay_data.php"
 )
 creds = dict()
 logging.basicConfig(level=logging.INFO)
@@ -25,14 +25,14 @@ cookies = {
 }
 
 headers = {
-    "authority": "piugame.com",
+    "authority": "phoenix.piugame.com",
     "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
     "accept-language": "en-US,en;q=0.9",
     "cache-control": "max-age=0",
     "content-type": "application/x-www-form-urlencoded",
     # 'cookie': 'sid=n0ft722fdd8m69p6ba23t7oq55; _ga=GA1.1.805729999.1692455102; PHPSESSID=n0ft722fdd8m69p6ba23t7oq55; 2a0d2363701f23f8a75028924a3af643=MTU0LjI3LjIxLjU4; _ga_D4HZW1SFFF=GS1.1.1693797062.7.0.1693797062.0.0.0',
-    "origin": "https://piugame.com",
-    "referer": "https://piugame.com/login.php?login_url=%2Fmy_page%2Fmy_best_score.php",
+    "origin": "https://phoenix.piugame.com",
+    "referer": "https://phoenix.piugame.com/login.php?login_url=%2Fmy_page%2Fmy_best_score.php",
     "sec-ch-ua": '"Chromium";v="116", "Not)A;Brand";v="24", "Microsoft Edge";v="116"',
     "sec-ch-ua-mobile": "?0",
     "sec-ch-ua-platform": '"Windows"',
@@ -222,7 +222,7 @@ def scrape_scores(
         data["mb_password"] = creds["mb_password"]
         # login then redirect to best scores
         res = s.post(
-            "https://piugame.com/bbs/login_check.php",
+            login_url,
             headers=headers,
             data=data,
         )
