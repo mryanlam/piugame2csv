@@ -215,7 +215,17 @@ def post_piuscores(scores, creds) -> None:
 def scrape_scores(
     post_scores: bool = False,
     page_limit: int = 3,
+    phoenix2: bool = False,
 ) -> None:
+    global base_url, login_url, login_page_url, headers
+    if phoenix2:
+        base_url = "https://piugame.com/my_page/my_best_score.php?&&page="
+        login_url = "https://piugame.com/bbs/login_check.php"
+        login_page_url = "https://piugame.com/login.php?login_url=%2Fmy_page%2Fplay_data.php"
+        headers["authority"] = "piugame.com"
+        headers["origin"] = "https://piugame.com"
+        headers["referer"] = "https://piugame.com/login.php?login_url=%2Fmy_page%2Fmy_best_score.php"
+
     # load creds
     with open("creds.json", "r") as f:
         creds = json.load(f)

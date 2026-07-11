@@ -9,10 +9,13 @@ def scrape_scores(
     post_scores: bool = False,
     page_limit: int = 3,
     all_pages: bool = False,
+    phoenix2: bool = False,
 ):
     if all_pages:
         page_limit = -1
-    piugame2csv.scrape_scores(post_scores=post_scores, page_limit=page_limit)
+    piugame2csv.scrape_scores(
+        post_scores=post_scores, page_limit=page_limit, phoenix2=phoenix2
+    )
 
 
 if __name__ == "__main__":
