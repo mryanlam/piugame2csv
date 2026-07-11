@@ -6,6 +6,9 @@ import re
 import time
 import csv
 import logging
+import urllib3
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 base_url = "https://phoenix.piugame.com/my_page/my_best_score.php?&&page="
 login_url = "https://phoenix.piugame.com/bbs/login_check.php"
@@ -149,7 +152,7 @@ def parse_best_scores(
         time.sleep(1)
         cur_page_url = base_url + str(page_num)
         logger.info(cur_page_url)
-        score_page = s.get(cur_page_url, headers=headers)
+        score_page = s.get(cur_page_url, headers=headers, verify=False)
         soup = bs.BeautifulSoup(score_page.text, "lxml")
         page_contents = soup.find(id="contents")
         cur_page_scores = parse_best_score(page_contents)
@@ -225,6 +228,7 @@ def scrape_scores(
             login_url,
             headers=headers,
             data=data,
+            verify=False,
         )
         logger.debug(f"Login response: {res.status_code}")
         logger.debug(f"cookies: {s.cookies.get_dict()}")
